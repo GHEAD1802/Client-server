@@ -1,15 +1,3 @@
-Note:
->> I have successfully completed BONUS questions, so it includes deleting tweets and logout
->> If one of the worker dies, and can reconnect
->> It's able to handle 1 to n worker
->> It is also load balancing across workers using random method
->> Front end and back end works very well alltogether
->> When we log out, it goes directly to main page as included in BONUS questions
->> According to rubric's point :GET/POST /api/tweet return appropriate error message when not logged 
-   to test this point, don not log out from screen, but right click->inspect->application->cookies->delete username manually from there
-   and try to post tweet on screen, it will give error message
-
-
 
 ##########################################################################################
 1) To run the full program using your browser
@@ -50,9 +38,9 @@ You will have to type
 webserver's port# is by default set to 8888, you should not use any other port when you are testing on browser
 hostname:8888
 
-HOST would be [whatever birdname you have for host].cs.umanitoba.ca
+HOST would be localhost
 for example type >>>
-crow.cs.umanitoba.ca:8888
+localhost:8888
 
 ***************************************************************************************
 
