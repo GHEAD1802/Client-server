@@ -1,0 +1,209 @@
+<!-- 
+---------------------------------------
+# NAME: Akashkumar Ghelani 
+# STUDENT NUMBER: 7870902
+# COURSE: COMP 3010, SECTION: A01
+# INSTRUCTOR: Robert Guderian
+# ASSIGNMENT: Assignment 2
+#          
+#---------------------------------------
+-->
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ecks</title>
+</head>
+<body>
+    <!------ Login Section ------>
+    <div id="login-section">
+        Ecks:
+        <input type="text" id="username">
+        <button onclick="login()">Login</button>
+    </div>
+
+    <!----- Tweets Section ------>
+    <div id="tweets-section" style="display: none;">
+        Ecks:
+        <div>
+            New Post:
+            <input type="text" id="tweet-input">
+            <button onclick="postTweet()">Send it!</button>
+        </div>
+        <div id="error-message"></div>
+        <div id="tweets-list"></div>
+        <button onclick="logout()">Logout</button>
+    </div>
+
+    <script>
+        let loggedIn = false;
+        let tweets = [];
+
+        //Adding the getCookie function
+        function getCookie(name) {
+            let value = "; " + document.cookie;
+            let parts = value.split("; " + name + "=");
+            if (parts.length == 2) return parts.pop().split(";").shift();
+        }
+
+        // All functions...
+
+        //Adding window.onload function
+        window.onload = function() {
+            const username = getCookie("username");
+            if (username) {
+                document.getElementById("username").value = username; // Setting the input field value
+                document.getElementById("login-section").style.display = "none";
+                document.getElementById("tweets-section").style.display = "block";
+                loadTweets();
+            }
+        }
+
+        //login function
+        function login() {
+            const username = document.getElementById("username").value;
+            if (username) {
+                //Creating XHR object
+                const xhr = new XMLHttpRequest();
+                xhr.open('POST', '/api/login', true);
+                xhr.setRequestHeader('Content-Type', 'application/json;charset=UTF-8');
+                xhr.onload = function() {
+                    if (xhr.readyState === 4 && xhr.status === 200) {
+                        loggedIn = true;
+                        
+                        document.getElementById("login-section").style.display = "none";
+                        document.getElementById("tweets-section").style.display = "block";
+                        loadTweets();
+                    } else {
+                        alert("Login failed! Please try again.");
+                    }
+                };
+                xhr.onerror = function() {
+                    alert("There was an error with the request. Please try again.");
+                };
+                xhr.send(JSON.stringify({ username: username }));
+            } else {
+                alert("Please enter a username!");
+            }
+        }
+
+        //deletetweet function
+        function deleteTweet(id) {
+                //Creating XHR object
+                const xhr = new XMLHttpRequest();
+                xhr.open('DELETE', `/api/tweet/${id}`, true);
+                xhr.onload = function() {
+                    if (xhr.readyState === 4 && xhr.status === 200) {
+                        loadTweets();
+                    } else {
+                        alert("Failed to delete the tweet.");
+                    }
+                };
+                xhr.onerror = function() {
+                    alert("An error occurred while trying to delete the tweet.");
+                };
+                xhr.send();
+            
+        }
+
+        //logout function
+        function logout() {
+            //Creating XHR object
+            const xhr = new XMLHttpRequest();
+            xhr.open("DELETE", "/api/login", true);
+            xhr.onload = function () {
+                if (xhr.status === 200) {
+                    document.getElementById("login-section").style.display = "block";
+                    document.getElementById("tweets-section").style.display = "none";
+                    
+                }
+            };
+            xhr.send();
+        }
+
+        //posttweet function
+        function postTweet() {
+            const tweetInput = document.getElementById("tweet-input");
+            const username = getCookie("username");
+            const errorMessageDiv = document.getElementById("error-message"); 
+
+            // Clearing all past error messages
+            errorMessageDiv.textContent = '';
+
+            if (!username) {
+                errorMessageDiv.textContent = "Something bad happened. Please ensure you're logged in before posting.";
+                return; // Exit the function
+            }
+            
+            if (tweetInput.value) {
+                //Creating XHR object
+                const xhr = new XMLHttpRequest();
+                xhr.open('POST', '/api/tweet', true);
+                xhr.setRequestHeader('Content-Type', 'application/json;charset=UTF-8');
+                xhr.onreadystatechange = function() {
+                    if (xhr.readyState === 4 && xhr.status === 200) {
+                        tweetInput.value = "";
+                        loadTweets();
+                    }else if (xhr.readyState === 4) {
+                        errorMessageDiv.textContent = "Failed to post tweet. Please try again.";
+                    }
+                };
+                xhr.onerror = function() {
+                    errorMessageDiv.textContent = "An error occurred while trying to post the tweet.";
+                };
+                xhr.send(JSON.stringify({ 
+                    user: document.getElementById("username").value, 
+                    content: tweetInput.value 
+                }));
+            } else {
+                errorMessageDiv.textContent = "Please enter something in your post!";
+            }
+        }
+
+        //loadtweet function
+        function loadTweets() {
+            //Creating XHR object
+            const xhr = new XMLHttpRequest();
+            xhr.open('GET', '/api/tweet', true);
+            xhr.onload = function() {
+                if (xhr.readyState === 4 && xhr.status === 200) {
+                    const data = JSON.parse(xhr.responseText);
+                    const tweetsList = document.getElementById("tweets-list");
+                    tweetsList.innerHTML = "";
+                    data.forEach((tweet, id) => {
+                        const tweetDiv = document.createElement("div");
+                        tweetDiv.innerHTML = `${tweet.user} says: ${tweet.content} 
+                                    <button onclick="updateTweet(${id})">Update</button>
+                                    <button onclick="deleteTweet(${id})">Delete</button>`;
+                        tweetsList.appendChild(tweetDiv);
+                    });
+                }
+            };
+            xhr.send();
+        }
+
+        //updatetweets function
+        function updateTweet(id) {
+            const newContent = prompt("Enter the updated content for the tweet:");
+            if (!newContent) {
+                alert("Please enter some content for the tweet.");
+                return;
+            }
+            //Creating XHR object
+            const xhr = new XMLHttpRequest();
+            xhr.open('PUT', `/api/tweet/${id}`, true);
+            xhr.setRequestHeader('Content-Type', 'application/json;charset=UTF-8');
+            xhr.onreadystatechange = function() {
+                if (xhr.readyState === 4) {
+                    if (xhr.status === 200) {
+                        loadTweets();
+                    }
+                }
+            };
+            xhr.send(JSON.stringify({ content: newContent }));
+        }
+    </script>
+</body>
+</html>
